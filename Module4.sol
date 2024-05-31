@@ -6,12 +6,15 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract JannaToken is ERC20, Ownable {
     event TokensMinted(address indexed receiver, uint256 amount);
+    event RewardRedeemed(address indexed player, string rewardName);
 
     struct Reward {
         string name;
         uint256 price;
     }
     Reward[] public rewards;
+
+    mapping(address => mapping(uint256 => bool)) public redeemedRewards;
 
     constructor() ERC20("JannaToken", "JNN") Ownable(msg.sender) {
         _mint(msg.sender, 100000 * 10 ** decimals());
@@ -37,17 +40,9 @@ contract JannaToken is ERC20, Ownable {
 
         Reward memory reward = rewards[rewardIndex];
         require(balanceOf(msg.sender) >= reward.price, "Not enough tokens, try again");
+        require(!redeemedRewards[msg.sender][rewardIndex], "Reward already redeemed");
 
         _burn(msg.sender, reward.price);
-        
+        redeemedRewards[msg.sender][rewardIndex] = true;
+        emit RewardRedeemed(msg.sender, reward.name);
     }
-
-    function checkTokenBalanceOf(address account) public view returns (uint256) {
-        return balanceOf(account);
-    }
-
-    function burnTokensByAmount(uint256 amount) public {
-        require(balanceOf(msg.sender) >= amount, "Not enough tokens, try again");
-        _burn(msg.sender, amount);
-    }
-}
